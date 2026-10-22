@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCheckout AI</title>
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <main class="container">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">SMARTCHECKOUT AI</p>
+                <h1>Complete your order</h1>
+                <p class="subtitle">
+                    A smarter checkout experience powered by Python.
+                </p>
+            </div>
+            <span class="demo-badge">DEMO MODE</span>
+        </header>
+
+        <div class="checkout-layout">
+            <section class="main-panel">
+                <div class="section-heading">
+                    <div>
+                        <p class="step-label">STEP 1 OF 2</p>
+                        <h2>Choose a payment method</h2>
+                    </div>
+                    <span class="lock-label">Demo only</span>
+                </div>
+
+                <p class="helper">
+                    Select one of your fictional saved payment methods.
+                </p>
+
+                <form id="checkout-form">
+                    <div class="payment-list">
+                        {% for method in payment_methods %}
+                        <label class="payment-option
+                            {% if loop.first %}selected{% endif %}"
+                            for="{{ method.id }}">
+
+                            <input
+                                type="radio"
+                                name="payment_method"
+                                id="{{ method.id }}"
+                                value="{{ method.id }}"
+                                {% if loop.first %}checked{% endif %}
+                            >
+
+                            <span class="radio-indicator"></span>
+
+                            <span class="card-symbol">
+                                {% if method.brand == "Visa" %}
+                                    VISA
+                                {% else %}
+                                    MC
+                                {% endif %}
+                            </span>
+
+                            <span class="payment-info">
+                                <strong>{{ method.brand }} •••• {{ method.last4 }}</strong>
+                                <small>{{ method.label }}</small>
+                            </span>
+
+                            {% if method.recommended %}
+                            <span class="recommended-badge">Demo pick</span>
+                            {% endif %}
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <section class="ai-panel">
+                        <div class="ai-icon">AI</div>
+                        <div>
+                            <h3>Smart recommendation</h3>
+                            <p id="recommendation">
+                                Our future ML model will personalise this
+                                recommendation using synthetic demo data.
+                            </p>
+                        </div>
+                    </section>
+
+                    <button class="primary-button" type="submit" id="pay-button">
+                        Confirm demo checkout
+                    </button>
+
+                    <p class="disclaimer">
+                        No real payment is taken. These are fictional
+                        payment methods, not actual cards.
+                    </p>
+
+                    <div id="checkout-result"
+                         class="result"
+                         role="status"
+                         aria-live="polite"
+                         hidden></div>
+                </form>
+            </section>
+
+            <aside class="order-panel">
+                <p class="step-label">YOUR ORDER</p>
+                <h2>Order summary</h2>
+
+                <div class="product-row">
+                    <div class="product-icon">AI</div>
+                    <div class="product-info">
+                        <strong>Smart Tech Bundle</strong>
+                        <small>Developer demo product</small>
+                        <small>Quantity: 1</small>
+                    </div>
+                </div>
+
+                <div class="price-row">
+                    <span>Subtotal</span>
+                    <span>£49.00</span>
+                </div>
+                <div class="price-row">
+                    <span>Delivery</span>
+                    <span>£0.00</span>
+                </div>
+                <div class="price-row total">
+                    <strong>Total</strong>
+                    <strong>£49.00</strong>
+                </div>
+
+                <div class="security-note">
+                    <strong>Privacy first</strong>
+                    <p>
+                        This demo does not ask for full card numbers,
+                        expiry dates, CVVs, or billing addresses.
+                    </p>
+                </div>
+            </aside>
+        </div>
+
+        <footer>
+            SmartCheckout AI · Python · Flask · Machine Learning
+        </footer>
+    </main>
+
+    <script>
+        const form = document.getElementById("checkout-form");
+        const result = document.getElementById("checkout-result");
+        const button = document.getElementById("pay-button");
+        const options = document.querySelectorAll(".payment-option");
+
+        options.forEach((option) => {
+            option.addEventListener("change", () => {
+                options.forEach((item) => {
+                    item.classList.remove("selected");
+                });
+
+                option.classList.add("selected");
+                result.hidden = true;
+                result.textContent = "";
+            });
+        });
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const selected = document.querySelector(
+                'input[name="payment_method"]:checked'
+            );
+
+            if (!selected) {
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Processing demo...";
+            result.hidden = true;
+
+            try {
+                const response = await fetch("/api/checkout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        payment_method_id: selected.value
+                    })
+                });
+
+                const data = await response.json();
+
+                result.textContent = data.message;
+                result.className = response.ok
+                    ? "result success"
+                    : "result error";
+                result.hidden = false;
+            } catch (error) {
+                result.textContent =
+                    "Could not reach the demo server. Please try again.";
+                result.className = "result error";
+                result.hidden = false;
+            } finally {
+                button.disabled = false;
+                button.textContent = "Confirm demo checkout";
+            }
+        });
+    </script>
+</body>
+</html>
